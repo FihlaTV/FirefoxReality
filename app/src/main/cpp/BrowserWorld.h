@@ -47,7 +47,7 @@ public:
   void FadeOut();
   void FadeIn();
   void ExitImmersive();
-  void SetTrayVisible(bool visible) const;
+  void OverrideEnvPath(bool override);
   JNIEnv* GetJNIEnv() const;
 protected:
   struct State;
@@ -60,7 +60,6 @@ protected:
   vrb::TransformPtr CreateSkyBox(const std::string& basePath);
   void LoadSkybox(const vrb::TransformPtr transform, const std::string& basePath);
   void CreateFloor();
-  void CreateTray();
   float DistanceToNode(const vrb::NodePtr& aNode, const vrb::Vector& aPosition) const;
 private:
   State& m;

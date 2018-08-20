@@ -159,6 +159,7 @@ struct BrowserWorld::State {
   bool exitImmersiveRequested;
   WidgetPtr resizingWidget;
   LoadingAnimationPtr loadingAnimation;
+  bool overrideEnvPath;
 
   State() : paused(true), glInitialized(false), modelsLoaded(false), env(nullptr), nearClip(0.1f),
             farClip(300.0f), activity(nullptr), windowsInitialized(false), exitImmersiveRequested(false), loaderDelay(0) {
@@ -181,6 +182,7 @@ struct BrowserWorld::State {
     blitter = ExternalBlitter::Create(create);
     fadeBlitter = FadeBlitter::Create(create);
     loadingAnimation = LoadingAnimation::Create(create);
+    overrideEnvPath = false;
   }
 
   void CheckBackButton();
@@ -755,6 +757,12 @@ BrowserWorld::ExitImmersive() {
   m.exitImmersiveRequested = true;
 }
 
+void
+BrowserWorld::OverrideEnvPath(bool override) {
+  ASSERT_ON_RENDER_THREAD();
+  m.overrideEnvPath = override;
+}
+
 JNIEnv*
 BrowserWorld::GetJNIEnv() const {
   ASSERT_ON_RENDER_THREAD(nullptr);
@@ -941,12 +949,12 @@ BrowserWorld::CreateFloor() {
 #else
   std::string environmentPath = "meadow_v4.obj";
 #endif
-#ifdef INJECT_ENVIRONMENT_PATH
-  std::string injectPath = VRBrowser::GetStorageAbsolutePath(INJECT_ENVIRONMENT_PATH);
-  if (std::ifstream(injectPath)) {
-    environmentPath = injectPath;
+  if (m.overrideEnvPath) {
+    std::string injectPath = VRBrowser::GetStorageAbsolutePath(INJECT_ENVIRONMENT_PATH);
+    if (std::ifstream(injectPath)) {
+      environmentPath = injectPath;
+    }
   }
-#endif
   m.loader->LoadModel(environmentPath, model);
   m.rootOpaque->AddNode(model);
   vrb::Matrix transform = vrb::Matrix::Identity();
@@ -1036,6 +1044,11 @@ JNI_METHOD(void, setTemporaryFilePath)
 JNI_METHOD(void, exitImmersiveNative)
 (JNIEnv* aEnv, jobject) {
   crow::BrowserWorld::Instance().ExitImmersive();
+}
+
+JNI_METHOD(void, overrideEnvPath)
+(JNIEnv* aEnv, jobject, jboolean override) {
+  crow::BrowserWorld::Instance().OverrideEnvPath(override);
 }
 
 } // extern "C"

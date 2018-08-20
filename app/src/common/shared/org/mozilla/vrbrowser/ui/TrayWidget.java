@@ -20,7 +20,7 @@ public class TrayWidget extends UIWidget implements SessionStore.SessionChangeLi
     private UIButton mSettingsButton;
     private UIButton mPrivateButton;
     private AudioEngine mAudio;
-    private SettingsWidget mSettingsWidget;
+    private int mSettingsDialogHandle = -1;
     private boolean mIsLastSessionPrivate;
 
     public TrayWidget(Context aContext) {
@@ -71,10 +71,7 @@ public class TrayWidget extends UIWidget implements SessionStore.SessionChangeLi
                     mAudio.playSound(AudioEngine.Sound.CLICK);
                 }
 
-                if (mSettingsWidget == null) {
-                    mSettingsWidget = new SettingsWidget(getContext());
-                }
-                mSettingsWidget.toggle();
+                showSettingsDialog();
             }
         });
 
@@ -140,13 +137,20 @@ public class TrayWidget extends UIWidget implements SessionStore.SessionChangeLi
         mIsLastSessionPrivate = isPrivateMode;
     }
 
-    public void setVisible(boolean isVisible) {
-        getPlacement().visible = isVisible;
+    protected void onChildClosed(int aHandle) {
+        mWidgetManager.fadeInWorld();
+    }
 
-        if (isVisible)
-            mWidgetManager.addWidget(this);
-        else
-            mWidgetManager.removeWidget(this);
+    private void showSettingsDialog() {
+        UIWidget widget = getChild(mSettingsDialogHandle);
+        if (widget == null) {
+            widget = createChild(SettingsWidget.class, false);
+            mSettingsDialogHandle = widget.getHandle();
+        }
+
+        widget.toggle();
+
+        mWidgetManager.fadeOutWorld();
     }
 
 }

@@ -124,6 +124,13 @@ public class VRBrowserActivity extends PlatformActivity implements WidgetManager
                 setTemporaryFilePath(tempPath);
             }
         });
+        final boolean override = SettingsStore.getInstance(this).isEnvironmentOverrideEnabled();
+        queueRunnable(new Runnable() {
+            @Override
+            public void run() {
+                overrideEnvPath(override);
+            }
+        });
         initializeWorld();
     }
 
@@ -136,6 +143,9 @@ public class VRBrowserActivity extends PlatformActivity implements WidgetManager
         int currentSession = SessionStore.get().getCurrentSessionId();
         mBrowserWidget = new BrowserWidget(this, currentSession);
         mPermissionDelegate.setParentWidgetHandle(mBrowserWidget.getHandle());
+        int windowWidth = SettingsStore.getInstance(this).getWindowWidth();
+        int windowHeight = SettingsStore.getInstance(this).getWindowHeight();
+        setBrowserSize(windowWidth, windowHeight);
 
         // Create Browser navigation widget
         mNavigationBar = new NavigationBarWidget(this);
@@ -601,7 +611,7 @@ public class VRBrowserActivity extends PlatformActivity implements WidgetManager
 
     @Override
     public void fadeOutWorld() {
-        if (SessionStore.get().isCurrentSessionPrivate() ^ mNavigationBar.isInFocusMode()) {
+        if ((SessionStore.get().isCurrentSessionPrivate() ^ mNavigationBar.isInFocusMode())) {
             queueRunnable(new Runnable() {
                 @Override
                 public void run() {
@@ -613,7 +623,7 @@ public class VRBrowserActivity extends PlatformActivity implements WidgetManager
 
     @Override
     public void fadeInWorld() {
-        if (!SessionStore.get().isCurrentSessionPrivate() && !mNavigationBar.isInFocusMode()) {
+        if ((!SessionStore.get().isCurrentSessionPrivate() && !mNavigationBar.isInFocusMode())) {
             queueRunnable(new Runnable() {
                 @Override
                 public void run() {
@@ -625,7 +635,18 @@ public class VRBrowserActivity extends PlatformActivity implements WidgetManager
 
     @Override
     public void setTrayVisible(boolean visible) {
-        mTray.setVisible(visible);
+        if (visible) {
+            mTray.show();
+
+        } else {
+            mTray.hide();
+        }
+    }
+
+    @Override
+    public void setBrowserSize(float targetWidth, float targetHeight) {
+        mBrowserWidget.getPlacement().width = (int)targetWidth;
+        mBrowserWidget.getPlacement().height = (int)targetHeight;
     }
 
     @Override
@@ -645,4 +666,5 @@ public class VRBrowserActivity extends PlatformActivity implements WidgetManager
     private native void fadeInWorldNative();
     private native void setTemporaryFilePath(String aPath);
     private native void exitImmersiveNative();
+    private native void overrideEnvPath(boolean override);
 }
